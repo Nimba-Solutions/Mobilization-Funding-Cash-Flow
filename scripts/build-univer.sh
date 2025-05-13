@@ -3,7 +3,8 @@
 # Get script directory and set paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
-STATIC_RESOURCES="$ROOT/force-app/main/default/staticresources"
+STATIC_RESOURCES="$ROOT/force-app/main/default/staticresources/univer"
+
 UNIVER_DIR="$ROOT/univer"
 
 # Add trap to handle Ctrl+C
