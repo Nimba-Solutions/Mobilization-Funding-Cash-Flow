@@ -10,7 +10,7 @@ UNIVER_DIR="$ROOT/univer"
 trap 'echo -e "\nScript interrupted by user. Exiting..."; exit 1' SIGINT
 
 echo "-----------------------------------------"
-echo "Building Univer..."
+echo "Verifying local environment..."
 echo "-----------------------------------------"
 
 # Function to compare versions
@@ -54,6 +54,9 @@ if ! version_gt "$PNPM_VERSION" "$MIN_PNPM_VERSION"; then
 fi
 
 # Build Univer
+echo "-----------------------------------------"
+echo "Building Univer..."
+echo "-----------------------------------------"
 cd "$UNIVER_DIR" || exit 1
 echo "Installing dependencies..."
 pnpm install
