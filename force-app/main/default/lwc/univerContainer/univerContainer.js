@@ -34,14 +34,14 @@ export default class UniverContainer extends LightningElement {
 
     // Loading sequence definition
     loadingSequence = [
-        { name: 'core', path: '/univer-core.js' },
-        { name: 'engineRender', path: '/univer-engine-render.js' },
-        { name: 'engineFormula', path: '/univer-engine-formula.js' },
-        { name: 'sheets', path: '/univer-sheets.js' },
-        { name: 'docs', path: '/univer-docs.js' },
-        { name: 'sheetsUi', path: '/univer-sheets-ui.js' },
-        { name: 'docsUi', path: '/univer-docs-ui.js' },
-        { name: 'sheetsFacade', path: '/univer-sheets-facade.js' }
+        { name: 'core', path: '/univer/core.js' },
+        { name: 'engineRender', path: '/univer/engine-render.js' },
+        { name: 'engineFormula', path: '/univer/engine-formula.js' },
+        { name: 'sheets', path: '/univer/sheets.js' },
+        { name: 'docs', path: '/univer/docs.js' },
+        { name: 'sheetsUi', path: '/univer/sheets-ui.js' },
+        { name: 'docsUi', path: '/univer/docs-ui.js' },
+        { name: 'sheetsFacade', path: '/univer/sheets-facade.js' }
     ];
 
     connectedCallback() {
@@ -105,11 +105,12 @@ export default class UniverContainer extends LightningElement {
     logMessage(level, message, error = null) {
         const timestamp = new Date().toISOString();
         const logMessage = `[Univer] ${timestamp} - ${message}`;
+        const errorDetails = error ? JSON.stringify(error, Object.getOwnPropertyNames(error)) : null;
         
         // Console logging
         switch (level) {
             case 'error':
-                console.error(logMessage, error);
+                console.error(logMessage, errorDetails);
                 break;
             case 'warning':
                 console.warn(logMessage);
@@ -127,7 +128,7 @@ export default class UniverContainer extends LightningElement {
                 level,
                 message,
                 timestamp,
-                error: error ? error.message : null
+                error: errorDetails
             },
             bubbles: true,
             composed: true

@@ -29,3 +29,19 @@ tasks:
     run_tests:
         options:
             required_org_code_coverage_percent: 75
+
+    assign_univer_admin_psg:
+        class_path: cumulusci.tasks.salesforce.users.permsets.AssignPermissionSetGroups
+        options:
+            api_names: UniverUnlockedAdmin
+
+flows:
+    config_dev:
+        steps:
+            3.0:
+                task: assign_univer_admin_psg
+
+    config_qa:
+        steps:
+            3.0:
+                task: assign_univer_admin_psg
