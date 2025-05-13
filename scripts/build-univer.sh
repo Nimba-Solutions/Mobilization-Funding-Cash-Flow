@@ -13,10 +13,43 @@ echo "-----------------------------------------"
 echo "Building Univer..."
 echo "-----------------------------------------"
 
-# Check if pnpm is installed
+# Function to compare versions
+version_gt() {
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
+}
+
+# Check if Node.js is installed and version >= 20
+if ! command -v node &> /dev/null; then
+    echo "Node.js is not installed. Please install Node.js >= 20"
+    echo "Visit: https://nodejs.org/"
+    exit 1
+fi
+
+NODE_VERSION=$(node -v | cut -d "v" -f 2)
+MIN_NODE_VERSION="20.0.0"
+
+if ! version_gt "$NODE_VERSION" "$MIN_NODE_VERSION"; then
+    echo "Node.js version must be >= 20.0.0"
+    echo "Current version: $NODE_VERSION"
+    echo "Please upgrade Node.js at https://nodejs.org/"
+    exit 1
+fi
+
+# Check if pnpm is installed and version >= 10
 if ! command -v pnpm &> /dev/null; then
-    echo "pnpm is not installed. Please install it first:"
+    echo "Univer is managed by pnpm, but pnpm is not installed."
+    echo "Please install pnpm >= 10:"
     echo "npm install -g pnpm"
+    exit 1
+fi
+
+PNPM_VERSION=$(pnpm -v)
+MIN_PNPM_VERSION="10.0.0"
+
+if ! version_gt "$PNPM_VERSION" "$MIN_PNPM_VERSION"; then
+    echo "pnpm version must be >= 10.0.0"
+    echo "Current version: $PNPM_VERSION"
+    echo "Please upgrade pnpm: npm install -g pnpm@latest"
     exit 1
 fi
 
