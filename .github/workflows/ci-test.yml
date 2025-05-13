@@ -1,0 +1,58 @@
+name: 🧪 CI Test
+
+on:
+    push:
+        branches:
+            - dev
+    pull_request:
+        branches:
+            - dev
+
+permissions:
+    contents: read
+    pull-requests: write
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: ./.github/actions/setup-node
+
+            - name: 🩺 Run test
+              run: pnpm coverage
+
+            - name: 🧬 Report coverage
+              uses: codecov/codecov-action@v3
+              env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    eslint:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: ./.github/actions/setup-node
+
+            - name: 🌡️ Run ESLint
+              run: pnpm lint --quiet
+
+    typecheck:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: ./.github/actions/setup-node
+
+            - name: 🧼 Type checking
+              run: pnpm lint:types
