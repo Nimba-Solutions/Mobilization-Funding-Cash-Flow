@@ -20,16 +20,14 @@ version_gt() {
 
 # Check Node.js version
 NODE_VERSION=$(node -v | cut -d "v" -f 2)
-MIN_NODE_VERSION="20.0.0"
+MIN_NODE_VERSION="20.18.0"
 
 if ! version_gt "$NODE_VERSION" "$MIN_NODE_VERSION"; then
-    echo "Node.js version must be >= 20.0.0"
+    echo "Node.js version must be >= 20.18.0"
     echo "Current version: $NODE_VERSION"
     echo ""
     echo "Options to upgrade Node.js:"
     echo "1. Download and install from https://nodejs.org/"
-    
-    # Detect OS and suggest appropriate nvm
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
         echo "2. Use nvm-windows to manage multiple versions:"
         echo "   https://github.com/coreybutler/nvm-windows"
@@ -60,19 +58,33 @@ if ! version_gt "$PNPM_VERSION" "$MIN_PNPM_VERSION"; then
     exit 1
 fi
 
+# Check turbo
+if ! command -v turbo &> /dev/null; then
+    echo "turbo is required but not installed."
+    echo "To install turbo:"
+    echo "npm install -g turbo"
+    exit 1
+fi
+
 echo "✓ Node.js v$NODE_VERSION"
 echo "✓ pnpm v$PNPM_VERSION"
+echo "✓ turbo is installed"
 echo ""
 
 echo "-----------------------------------------"
 echo "Building Univer..."
 echo "-----------------------------------------"
 
+# Check if node_modules exists in univer directory
+if [ ! -d "$UNIVER_DIR/node_modules" ]; then
+    echo "Installing dependencies..."
+    cd "$UNIVER_DIR" || exit 1
+    pnpm install
+    cd "$ROOT" || exit 1
+fi
+
 # Build Univer
 cd "$UNIVER_DIR" || exit 1
-echo "Installing dependencies..."
-pnpm install
-
 echo "Building packages..."
 pnpm build
 
@@ -87,15 +99,19 @@ mkdir -p "$STATIC_RESOURCES"
 copy_file() {
     local src="$1"
     local dest="$2"
+    local dest_name=$(basename "$dest")
     if [ -f "$src" ]; then
         if cp "$src" "$dest"; then
-            echo "SUCCESS: Copied $(basename "$src")"
+            local size=$(stat -c%s "$src" 2>/dev/null || stat -f%z "$src" 2>/dev/null)
+            # Convert to KB without bc command
+            local size_kb=$((size / 1024))
+            echo "✓ Copied $dest_name ($size_kb KB)"
         else
-            echo "FAILED: Could not copy $(basename "$src")"
+            echo "✕ Failed to copy $dest_name"
             return 1
         fi
     else
-        echo "SKIPPED: File not found - $(basename "$src")"
+        echo "- Skipped $dest_name (source file not found)"
     fi
 }
 
@@ -112,10 +128,16 @@ echo "Copying UI files..."
 copy_file "$UNIVER_DIR/packages/sheets-ui/lib/umd/index.js" "$STATIC_RESOURCES/univer-sheets-ui.js"
 copy_file "$UNIVER_DIR/packages/docs-ui/lib/umd/index.js" "$STATIC_RESOURCES/univer-docs-ui.js"
 
-# Copy facade files (if they exist)
-echo "Copying facade files..."
-copy_file "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" "$STATIC_RESOURCES/univer-sheets-facade.js"
-copy_file "$UNIVER_DIR/packages/docs/lib/umd/facade.js" "$STATIC_RESOURCES/univer-docs-facade.js"
+# Copy facade files (only if they exist in source)
+if [ -f "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" ] || [ -f "$UNIVER_DIR/packages/docs/lib/umd/facade.js" ]; then
+    echo "Copying facade files..."
+    if [ -f "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" ]; then
+        copy_file "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" "$STATIC_RESOURCES/univer-sheets-facade.js"
+    fi
+    if [ -f "$UNIVER_DIR/packages/docs/lib/umd/facade.js" ]; then
+        copy_file "$UNIVER_DIR/packages/docs/lib/umd/facade.js" "$STATIC_RESOURCES/univer-docs-facade.js"
+    fi
+fi
 
 echo "-----------------------------------------"
 echo "Build and copy operations completed"
