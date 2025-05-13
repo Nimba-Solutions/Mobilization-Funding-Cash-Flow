@@ -1,0 +1,41 @@
+<template>
+    <div class="univer-container">
+        <!-- Loading State -->
+        <template if:false={loadingStatus.isComplete}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading Univer" size="medium"></lightning-spinner>
+                <div class="loading-status">
+                    <p>Loading Univer ({loadingStatus.progress}%)</p>
+                    <lightning-progress-bar value={loadingStatus.progress} size="large" variant="circular">
+                    </lightning-progress-bar>
+                </div>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template if:true={loadingStatus.hasErrors}>
+            <div class="error-container">
+                <lightning-card title="Loading Errors" icon-name="utility:error">
+                    <div class="slds-p-around_medium">
+                        <template for:each={errors} for:item="error">
+                            <div key={error.resource} class="slds-text-color_error">
+                                Failed to load {error.resource}: {error.error.message}
+                            </div>
+                        </template>
+                        <div class="slds-m-top_small">
+                            <lightning-button label="Retry Loading" onclick={loadUniver} variant="brand">
+                            </lightning-button>
+                        </div>
+                    </div>
+                </lightning-card>
+            </div>
+        </template>
+
+        <!-- Univer Container -->
+        <template if:true={loadingStatus.isComplete}>
+            <div class="univer-workspace" lwc:dom="manual">
+                <!-- Univer will be initialized here -->
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,32 @@
+.univer-container {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    position: relative;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+}
+
+.loading-status {
+    text-align: center;
+    margin-top: 1rem;
+    width: 200px;
+}
+
+.error-container {
+    padding: 1rem;
+}
+
+.univer-workspace {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    background: #ffffff;
+} 

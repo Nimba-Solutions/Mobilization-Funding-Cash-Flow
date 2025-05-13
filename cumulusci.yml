@@ -4,8 +4,8 @@ project:
     package:
         name: Mobilization-Funding-Cash-Flow
         api_version: "63.0"
-    dependencies:
-        - github: https://github.com/Nimba-Solutions/Mobilization-Funding
+    # dependencies:
+    #     - github: https://github.com/Nimba-Solutions/Mobilization-Funding
 
     git:
         default_branch: "main"
