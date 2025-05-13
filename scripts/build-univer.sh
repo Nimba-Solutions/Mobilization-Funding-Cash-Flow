@@ -118,25 +118,25 @@ copy_file() {
 
 # Copy core UMD files
 echo "Copying core files..."
-copy_file "$UNIVER_DIR/packages/core/lib/umd/index.js" "$STATIC_RESOURCES/univer-core.js"
-copy_file "$UNIVER_DIR/packages/sheets/lib/umd/index.js" "$STATIC_RESOURCES/univer-sheets.js"
-copy_file "$UNIVER_DIR/packages/docs/lib/umd/index.js" "$STATIC_RESOURCES/univer-docs.js"
-copy_file "$UNIVER_DIR/packages/engine-render/lib/umd/index.js" "$STATIC_RESOURCES/univer-engine-render.js"
-copy_file "$UNIVER_DIR/packages/engine-formula/lib/umd/index.js" "$STATIC_RESOURCES/univer-engine-formula.js"
+copy_file "$UNIVER_DIR/packages/core/lib/umd/index.js" "$STATIC_RESOURCES/core.js"
+copy_file "$UNIVER_DIR/packages/sheets/lib/umd/index.js" "$STATIC_RESOURCES/sheets.js"
+copy_file "$UNIVER_DIR/packages/docs/lib/umd/index.js" "$STATIC_RESOURCES/docs.js"
+copy_file "$UNIVER_DIR/packages/engine-render/lib/umd/index.js" "$STATIC_RESOURCES/engine-render.js"
+copy_file "$UNIVER_DIR/packages/engine-formula/lib/umd/index.js" "$STATIC_RESOURCES/engine-formula.js"
 
 # Copy UI files
 echo "Copying UI files..."
-copy_file "$UNIVER_DIR/packages/sheets-ui/lib/umd/index.js" "$STATIC_RESOURCES/univer-sheets-ui.js"
-copy_file "$UNIVER_DIR/packages/docs-ui/lib/umd/index.js" "$STATIC_RESOURCES/univer-docs-ui.js"
+copy_file "$UNIVER_DIR/packages/sheets-ui/lib/umd/index.js" "$STATIC_RESOURCES/sheets-ui.js"
+copy_file "$UNIVER_DIR/packages/docs-ui/lib/umd/index.js" "$STATIC_RESOURCES/docs-ui.js"
 
 # Copy facade files (only if they exist in source)
 if [ -f "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" ] || [ -f "$UNIVER_DIR/packages/docs/lib/umd/facade.js" ]; then
     echo "Copying facade files..."
     if [ -f "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" ]; then
-        copy_file "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" "$STATIC_RESOURCES/univer-sheets-facade.js"
+        copy_file "$UNIVER_DIR/packages/sheets/lib/umd/facade.js" "$STATIC_RESOURCES/sheets-facade.js"
     fi
     if [ -f "$UNIVER_DIR/packages/docs/lib/umd/facade.js" ]; then
-        copy_file "$UNIVER_DIR/packages/docs/lib/umd/facade.js" "$STATIC_RESOURCES/univer-docs-facade.js"
+        copy_file "$UNIVER_DIR/packages/docs/lib/umd/facade.js" "$STATIC_RESOURCES/docs-facade.js"
     fi
 fi
 
