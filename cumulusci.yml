@@ -16,21 +16,25 @@ project:
 
 tasks:
     robot:
+        group: "Dev/CI"
         options:
             suites: robot/Mobilization-Funding-Cash-Flow/tests
             options:
                 outputdir: robot/Mobilization-Funding-Cash-Flow/results
 
     robot_testdoc:
+        group: "Dev/CI"
         options:
             path: robot/Mobilization-Funding-Cash-Flow/tests
             output: robot/Mobilization-Funding-Cash-Flow/doc/Mobilization-Funding-Cash-Flow_tests.html
 
     run_tests:
+        group: "Dev/CI"
         options:
             required_org_code_coverage_percent: 75
 
     assign_univer_admin_psg:
+        group: "Dev/CI"
         class_path: cumulusci.tasks.salesforce.users.permsets.AssignPermissionSetGroups
         options:
             api_names: UniverUnlockedAdmin

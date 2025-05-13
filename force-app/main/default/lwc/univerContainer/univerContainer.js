@@ -13,9 +13,35 @@ const LOAD_STATES = {
     ERROR: 'error'
 };
 
+// Default workbook data
+const DEFAULT_WORKBOOK_DATA = {
+    id: 'default',
+    sheets: [{
+        id: 'sheet1',
+        name: 'Sheet 1',
+        cellData: {},
+        rowCount: 1000,
+        columnCount: 26
+    }],
+    name: 'Untitled Workbook',
+    appVersion: '3.0.0-alpha',
+    sheets: [{
+        id: 'sheet1',
+        name: 'Sheet 1'
+    }],
+    locale: 'en-US',
+    name: 'Untitled',
+    sheetOrder: ['sheet1'],
+    styles: {},
+    formatConfig: {}
+};
+
 export default class UniverContainer extends LightningElement {
     @api recordId;
     @api objectApiName;
+
+    univerInstance;
+    workbook;
 
     // Loading state tracking
     loadingStates = {
@@ -32,21 +58,22 @@ export default class UniverContainer extends LightningElement {
     // Error tracking
     errors = [];
 
-    // Loading sequence definition
+    // Loading sequence definition with dependencies
     loadingSequence = [
-        { name: 'core', path: '/univer/core.js' },
-        { name: 'engineRender', path: '/univer/engine-render.js' },
-        { name: 'engineFormula', path: '/univer/engine-formula.js' },
-        { name: 'sheets', path: '/univer/sheets.js' },
-        { name: 'docs', path: '/univer/docs.js' },
-        { name: 'sheetsUi', path: '/univer/sheets-ui.js' },
-        { name: 'docsUi', path: '/univer/docs-ui.js' },
-        { name: 'sheetsFacade', path: '/univer/sheets-facade.js' }
+        { name: 'core', path: '/core.js' },
+        { name: 'engineRender', path: '/engine-render.js', depends: ['core'] },
+        { name: 'engineFormula', path: '/engine-formula.js', depends: ['core'] },
+        { name: 'sheets', path: '/sheets.js', depends: ['core', 'engineRender', 'engineFormula'] },
+        { name: 'docs', path: '/docs.js', depends: ['core', 'engineRender'] },
+        { name: 'sheetsUi', path: '/sheets-ui.js', depends: ['sheets'] },
+        { name: 'docsUi', path: '/docs-ui.js', depends: ['docs'] },
+        { name: 'sheetsFacade', path: '/sheets-facade.js', depends: ['sheets', 'sheetsUi'] }
     ];
 
     connectedCallback() {
         this.logMessage('info', 'UniverContainer initialization started');
-        this.loadUniver();
+        // Wait for the DOM to be ready
+        Promise.resolve().then(() => this.loadUniver());
     }
 
     /**
@@ -54,12 +81,40 @@ export default class UniverContainer extends LightningElement {
      */
     async loadUniver() {
         try {
-            for (const resource of this.loadingSequence) {
-                await this.loadResource(resource);
-            }
+            // Reset states
+            this.errors = [];
+            this.loadingStates = Object.fromEntries(
+                Object.keys(this.loadingStates).map(key => [key, LOAD_STATES.NOT_STARTED])
+            );
+
+            // Load core first
+            await this.loadResource(this.loadingSequence[0]);
+
+            // Load remaining resources in parallel, respecting dependencies
+            const remainingResources = this.loadingSequence.slice(1);
+            await Promise.all(
+                remainingResources.map(async resource => {
+                    // Wait for dependencies
+                    if (resource.depends) {
+                        await Promise.all(
+                            resource.depends.map(dep => 
+                                this.waitForResourceLoad(dep)
+                            )
+                        );
+                    }
+                    return this.loadResource(resource);
+                })
+            );
             
             this.logMessage('success', 'All Univer resources loaded successfully');
-            this.initializeUniver();
+            
+            // Update loading status
+            this.loadingStates = Object.fromEntries(
+                Object.keys(this.loadingStates).map(key => [key, LOAD_STATES.LOADED])
+            );
+
+            // Wait for next render cycle and initialize
+            await this.initializeUniver();
         } catch (error) {
             this.logMessage('error', 'Failed to load Univer resources', error);
             this.showErrorToast('Failed to load Univer', error.message);
@@ -67,18 +122,50 @@ export default class UniverContainer extends LightningElement {
     }
 
     /**
+     * Wait for a resource to be loaded
+     */
+    waitForResourceLoad(resourceName) {
+        return new Promise((resolve, reject) => {
+            const checkState = () => {
+                const state = this.loadingStates[resourceName];
+                if (state === LOAD_STATES.LOADED) {
+                    resolve();
+                } else if (state === LOAD_STATES.ERROR) {
+                    reject(new Error(`Dependency ${resourceName} failed to load`));
+                } else {
+                    setTimeout(checkState, 100);
+                }
+            };
+            checkState();
+        });
+    }
+
+    /**
      * Load a single resource with state tracking
      */
     async loadResource({ name, path }) {
         this.logMessage('info', `Loading ${name}...`);
-        this.loadingStates[name] = LOAD_STATES.LOADING;
+        
+        this.loadingStates = {
+            ...this.loadingStates,
+            [name]: LOAD_STATES.LOADING
+        };
 
         try {
             await loadScript(this, univer + path);
-            this.loadingStates[name] = LOAD_STATES.LOADED;
+            
+            this.loadingStates = {
+                ...this.loadingStates,
+                [name]: LOAD_STATES.LOADED
+            };
+            
             this.logMessage('success', `${name} loaded successfully`);
         } catch (error) {
-            this.loadingStates[name] = LOAD_STATES.ERROR;
+            this.loadingStates = {
+                ...this.loadingStates,
+                [name]: LOAD_STATES.ERROR
+            };
+            
             this.errors.push({ resource: name, error });
             this.logMessage('error', `Failed to load ${name}`, error);
             throw new Error(`Failed to load ${name}: ${error.message}`);
@@ -88,14 +175,43 @@ export default class UniverContainer extends LightningElement {
     /**
      * Initialize Univer after all resources are loaded
      */
-    initializeUniver() {
+    async initializeUniver() {
         try {
             this.logMessage('info', 'Initializing Univer...');
-            // TODO: Initialize Univer instance
+            
+            // Ensure container is ready
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            
+            const container = this.template.querySelector('.univer-workspace');
+            if (!container) {
+                throw new Error('Container element not found');
+            }
+
+            // Wait for window.Univer to be available
+            if (!window.Univer || !window.Univer.createUniver) {
+                throw new Error('Univer not properly loaded');
+            }
+
+            // Initialize with required configuration
+            this.univerInstance = window.Univer.createUniver({
+                container,
+                locale: 'en-US',
+                theme: {
+                    appearance: 'light'
+                }
+            });
+
+            // Create initial workbook
+            this.workbook = this.univerInstance.createUnitFromJson(
+                'Workbook',
+                DEFAULT_WORKBOOK_DATA
+            );
+            
             this.logMessage('success', 'Univer initialized successfully');
         } catch (error) {
             this.logMessage('error', 'Failed to initialize Univer', error);
             this.showErrorToast('Failed to initialize Univer', error.message);
+            throw error;
         }
     }
 
@@ -153,9 +269,10 @@ export default class UniverContainer extends LightningElement {
         const total = Object.keys(this.loadingStates).length;
         const loaded = Object.values(this.loadingStates)
             .filter(state => state === LOAD_STATES.LOADED).length;
+        
         return {
-            isComplete: loaded === total,
-            progress: Math.round((loaded / total) * 100),
+            isComplete: loaded === total && total > 0,
+            progress: total > 0 ? Math.round((loaded / total) * 100) : 0,
             hasErrors: this.errors.length > 0
         };
     }

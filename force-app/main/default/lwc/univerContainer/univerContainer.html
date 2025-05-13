@@ -3,7 +3,6 @@
         <!-- Loading State -->
         <template if:false={loadingStatus.isComplete}>
             <div class="loading-container">
-                <lightning-spinner alternative-text="Loading Univer" size="medium"></lightning-spinner>
                 <div class="loading-status">
                     <p>Loading Univer ({loadingStatus.progress}%)</p>
                     <lightning-progress-bar value={loadingStatus.progress} size="large" variant="circular">
