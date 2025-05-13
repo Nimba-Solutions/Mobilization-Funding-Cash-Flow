@@ -187,25 +187,24 @@ export default class UniverContainer extends LightningElement {
                 throw new Error('Container element not found');
             }
 
-            // Wait for window.Univer to be available
-            if (!window.Univer || !window.Univer.createUniver) {
-                throw new Error('Univer not properly loaded');
-            }
-
-            // Initialize with required configuration
-            this.univerInstance = window.Univer.createUniver({
-                container,
+            // Initialize with required configuration using the correct API
+            const univer = new window.Univer({
+                theme: window.defaultTheme,
                 locale: 'en-US',
-                theme: {
-                    appearance: 'light'
-                }
+                container: container
             });
 
-            // Create initial workbook
-            this.workbook = this.univerInstance.createUnitFromJson(
-                'Workbook',
-                DEFAULT_WORKBOOK_DATA
-            );
+            // Register required plugins
+            univer.registerPlugin(window.UniverSheetsPlugin);
+            univer.registerPlugin(window.UniverFormulaEnginePlugin);
+            univer.registerPlugin(window.UniverRenderEnginePlugin);
+            univer.registerPlugin(window.UniverUIPlugin, {
+                container: container
+            });
+
+            // Create workbook
+            this.univerInstance = univer;
+            this.workbook = univer.createUnit(window.UniverInstanceType.UNIVER_SHEET, DEFAULT_WORKBOOK_DATA);
             
             this.logMessage('success', 'Univer initialized successfully');
         } catch (error) {
