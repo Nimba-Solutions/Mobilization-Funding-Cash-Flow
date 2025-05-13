@@ -10,7 +10,7 @@ UNIVER_DIR="$ROOT/univer"
 trap 'echo -e "\nScript interrupted by user. Exiting..."; exit 1' SIGINT
 
 echo "-----------------------------------------"
-echo "Verifying local environment..."
+echo "Checking environment..."
 echo "-----------------------------------------"
 
 # Function to compare versions
@@ -18,27 +18,32 @@ version_gt() {
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
 }
 
-# Check if Node.js is installed and version >= 20
-if ! command -v node &> /dev/null; then
-    echo "Node.js is not installed. Please install Node.js >= 20"
-    echo "Visit: https://nodejs.org/"
-    exit 1
-fi
-
+# Check Node.js version
 NODE_VERSION=$(node -v | cut -d "v" -f 2)
 MIN_NODE_VERSION="20.0.0"
 
 if ! version_gt "$NODE_VERSION" "$MIN_NODE_VERSION"; then
     echo "Node.js version must be >= 20.0.0"
     echo "Current version: $NODE_VERSION"
-    echo "Please upgrade Node.js at https://nodejs.org/"
+    echo ""
+    echo "Options to upgrade Node.js:"
+    echo "1. Download and install from https://nodejs.org/"
+    
+    # Detect OS and suggest appropriate nvm
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+        echo "2. Use nvm-windows to manage multiple versions:"
+        echo "   https://github.com/coreybutler/nvm-windows"
+    else
+        echo "2. Use nvm to manage multiple versions:"
+        echo "   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash"
+    fi
     exit 1
 fi
 
-# Check if pnpm is installed and version >= 10
+# Check pnpm version
 if ! command -v pnpm &> /dev/null; then
-    echo "Univer is managed by pnpm, but pnpm is not installed."
-    echo "Please install pnpm >= 10:"
+    echo "pnpm is required but not installed."
+    echo "To install pnpm:"
     echo "npm install -g pnpm"
     exit 1
 fi
@@ -49,14 +54,21 @@ MIN_PNPM_VERSION="10.0.0"
 if ! version_gt "$PNPM_VERSION" "$MIN_PNPM_VERSION"; then
     echo "pnpm version must be >= 10.0.0"
     echo "Current version: $PNPM_VERSION"
-    echo "Please upgrade pnpm: npm install -g pnpm@latest"
+    echo ""
+    echo "To upgrade pnpm:"
+    echo "npm install -g pnpm@latest"
     exit 1
 fi
 
-# Build Univer
+echo "✓ Node.js v$NODE_VERSION"
+echo "✓ pnpm v$PNPM_VERSION"
+echo ""
+
 echo "-----------------------------------------"
 echo "Building Univer..."
 echo "-----------------------------------------"
+
+# Build Univer
 cd "$UNIVER_DIR" || exit 1
 echo "Installing dependencies..."
 pnpm install
